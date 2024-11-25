@@ -119,24 +119,12 @@ const verifyToken = async (req, res) => {
             return res.status(400).json({ error: "Invalid token format" });
         }
 
-        console.log("Token extracted:", actualToken);
-
         // Verify the token using the SECRET_KEY
         const user = await jwt.verify(actualToken, SECRET_KEY);
 
-        console.log("Decoded user:", user);
-
         // Send the user details
         res.status(200).json({
-            data: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                phNo: user.phNo,
-                address: user.address,
-                lat: user.lat,
-                lon: user.lon,
-            }, message: "Verified User"
+            data: user, message: "Verified User"
         });
     } catch (e) {
         console.error("Token verification error:", e.message);
