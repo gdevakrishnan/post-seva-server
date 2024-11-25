@@ -86,7 +86,7 @@ const updateUser = async (req, res) => {
 
     try {
         const updatedUser = await User.findByIdAndUpdate(
-            id, 
+            id,
             { username, email, phNo, address, lat, lon },
             { new: true, runValidators: true }
         );
@@ -112,23 +112,23 @@ const verifyToken = async (req, res) => {
     }
 
     try {
-        // Remove "Bearer " prefix if present
+        // Extract the token from the body
         const actualToken = token.startsWith("Bearer ") ? token.split(" ")[1] : token;
-
-        // Verify the token
-        const decoded = jwt.verify(actualToken, SECRET_KEY);
-
-        // Fetch user details from the database using the user ID from the token
-        const user = await User.findById(decoded.id);
-
-        if (!user) {
-            return res.status(404).json({ error: "User not found" });
+        
+        if (!actualToken || actualToken.split('.').length !== 3) {
+            return res.status(400).json({ error: "Invalid token format" });
         }
 
-        // Return user details
+        console.log("Token extracted:", actualToken);
+
+        // Verify the token using the SECRET_KEY
+        const user = await jwt.verify(actualToken, SECRET_KEY);
+
+        console.log("Decoded user:", user);
+
+        // Send the user details
         res.status(200).json({
-            message: "User details retrieved successfully",
-            user: {
+            data: {
                 id: user._id,
                 username: user.username,
                 email: user.email,
@@ -136,16 +136,18 @@ const verifyToken = async (req, res) => {
                 address: user.address,
                 lat: user.lat,
                 lon: user.lon,
-            },
+            }, message: "Verified User"
         });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to decode token", details: error.message });
+    } catch (e) {
+        console.error("Token verification error:", e.message);
+        res.status(400).json({ message: "Invalid token", error: e.message });
     }
 };
 
+
 // Cron Job
 const cronJob = async (req, res) => {
-    res.status(200).json({message: "Running"});
+    res.status(200).json({ message: "Running" });
 }
 
 module.exports = { sendOtp, verifyOtp, cronJob, updateUser, verifyToken };
