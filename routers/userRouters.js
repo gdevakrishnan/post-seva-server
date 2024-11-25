@@ -1,10 +1,11 @@
 const express = require('express');
-const { sendOtp, verifyOtp, cronJob, updateUser } = require('../controllers/userControllers');
+const { sendOtp, verifyOtp, cronJob, updateUser, verifyToken } = require('../controllers/userControllers');
 const routers = express.Router();
 
-routers.post('/send_otp', sendOtp);
-routers.post('/verify_otp', verifyOtp);
-routers.post('/update_user', updateUser);
-routers.get('/cron_job', cronJob);
+routers.post('/send-otp', sendOtp);
+routers.post('/verify-otp', verifyOtp);
+routers.post('/update-user', updateUser);
+routers.get('/cron-job', cronJob);
+routers.get('/verify-token', verifyToken);
 
 module.exports = ("userRouters", routers);

@@ -65,13 +65,6 @@ const verifyOtp = async (req, res) => {
         // Generate a Bearer token
         const token = jwt.sign({ id: user._id }, SECRET_KEY, { expiresIn: EXPIRY_TIME });
 
-        console.log({
-            userId: user._id,
-            token: `Bearer ${token}`,
-            userAlreadyExists,
-        });
-        
-
         // Return only the user ID, token, and existence status
         res.status(200).json({
             userId: user._id,
@@ -86,9 +79,6 @@ const verifyOtp = async (req, res) => {
 // Update user
 const updateUser = async (req, res) => {
     const { id, username, email, phNo, address, lat, lon } = req.body;
-
-    console.log(username, email, phNo, address, lat, lon, id);
-    
 
     if (!id) {
         return res.status(400).json({ error: "User ID is required" });
@@ -114,10 +104,48 @@ const updateUser = async (req, res) => {
     }
 };
 
+const verifyToken = async (req, res) => {
+    const { token } = req.body; // Bearer token is sent in the request body
+
+    if (!token) {
+        return res.status(400).json({ error: "Token is required" });
+    }
+
+    try {
+        // Remove "Bearer " prefix if present
+        const actualToken = token.startsWith("Bearer ") ? token.split(" ")[1] : token;
+
+        // Verify the token
+        const decoded = jwt.verify(actualToken, SECRET_KEY);
+
+        // Fetch user details from the database using the user ID from the token
+        const user = await User.findById(decoded.id);
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Return user details
+        res.status(200).json({
+            message: "User details retrieved successfully",
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                phNo: user.phNo,
+                address: user.address,
+                lat: user.lat,
+                lon: user.lon,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to decode token", details: error.message });
+    }
+};
 
 // Cron Job
 const cronJob = async (req, res) => {
     res.status(200).json({message: "Running"});
 }
 
-module.exports = { sendOtp, verifyOtp, cronJob, updateUser };
+module.exports = { sendOtp, verifyOtp, cronJob, updateUser, verifyToken };
