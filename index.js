@@ -22,3 +22,5 @@ mongoose.connect(MONGO_URI)
 
 // Routers Middleware
 app.use('/api', userRouters);
+
+// Deployed Link: https://post-seva-server.onrender.com
