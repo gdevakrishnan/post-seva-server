@@ -51,7 +51,7 @@ const staffLogin = async (req, res) => {
         }
 
         // Generate a JWT token
-        const token = jwt.sign({ userId: user.userId }, SECRET_KEY, { expiresIn: '1h' });
+        const token = jwt.sign({ userId: user.userId, postalCode: user.postalCode }, SECRET_KEY, { expiresIn: '1h' });
 
         return res.status(200).json({ message: 'Login successful', token: `Bearer ${token}` });
     } catch (error) {
