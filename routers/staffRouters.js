@@ -6,6 +6,6 @@ const routers = express.Router();
 routers.post('/register', staffRegister);
 routers.post('/login', staffLogin);
 routers.post('/check-user-id', checkUserId);
-routers.get('/staff-verify-token', verifyToken);
+routers.post('/staff-verify-token', verifyToken);
 
 module.exports = ("staffRouters", routers);
