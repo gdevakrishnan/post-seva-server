@@ -53,7 +53,7 @@ const staffLogin = async (req, res) => {
         // Generate a JWT token
         const token = jwt.sign({ userId: user.userId }, SECRET_KEY, { expiresIn: '1h' });
 
-        return res.status(200).json({ message: 'Login successful', token });
+        return res.status(200).json({ message: 'Login successful', token: `Bearer ${token}` });
     } catch (error) {
         return res.status(500).json({ message: 'Internal server error', error });
     }
@@ -79,21 +79,30 @@ const checkUserId = async (req, res) => {
 
 // Verify JWT token and return user data
 const verifyToken = async (req, res) => {
+    const { token } = req.body; // Bearer token is sent in the request body
+
+    if (!token) {
+        return res.status(400).json({ error: "Token is required" });
+    }
+
     try {
-        const token = req.headers.authorization.split(' ')[1];
-
-        // Verify token
-        const decoded = jwt.verify(token, SECRET_KEY);
-
-        // Find user by userId
-        const user = await User.findOne({ userId: decoded.userId });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+        // Extract the token from the body
+        const actualToken = token.startsWith("Bearer ") ? token.split(" ")[1] : token;
+        
+        if (!actualToken || actualToken.split('.').length !== 3) {
+            return res.status(400).json({ error: "Invalid token format" });
         }
 
-        return res.status(200).json({ message: 'Token verified', user });
-    } catch (error) {
-        return res.status(401).json({ message: 'Unauthorized', error });
+        // Verify the token using the SECRET_KEY
+        const user = await jwt.verify(actualToken, SECRET_KEY);
+
+        // Send the user details
+        res.status(200).json({
+            data: user, message: "Verified User"
+        });
+    } catch (e) {
+        console.error("Token verification error:", e.message);
+        res.status(400).json({ message: "Invalid token", error: e.message });
     }
 };
 
