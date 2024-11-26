@@ -3,6 +3,7 @@ const app = express();
 const cors = require('cors');
 const { default: mongoose } = require('mongoose');
 const userRouters = require('./routers/userRouters.js');
+const staffRouters = require('./routers/staffRouters.js');
 
 require('dotenv').config();
 const { PORT, MONGO_URI } = process.env;
@@ -21,6 +22,7 @@ mongoose.connect(MONGO_URI)
     .catch((e) => console.log(e.message));
 
 // Routers Middleware
-app.use('/api', userRouters);
+app.use('/api/user', userRouters);
+app.use('/api/staff', staffRouters);
 
 // Deployed Link: https://post-seva-server.onrender.com
