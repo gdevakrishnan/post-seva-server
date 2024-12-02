@@ -2,6 +2,7 @@ const express = require('express');
 const {
     sendOtp,
     verifyOtp,
+    getUserById,
     cronJob,
     updateUser,
     verifyToken,
@@ -18,6 +19,7 @@ const routers = express.Router();
 routers.post('/send-otp', sendOtp);
 routers.post('/verify-otp', verifyOtp);
 routers.post('/update-user', updateUser);
+routers.post('/getuser', getUserById);
 routers.post('/verify-token', verifyToken);
 
 // Complaint-related routes
