@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const User = require("../models/userModels"); // Adjust the path as per your project
+const User = require("../models/userModels");
+const { Complaints } = require("../models/userModels");
 const crypto = require("crypto");
 const twilio = require("twilio");
 
@@ -20,7 +21,7 @@ const sendOtp = async (req, res) => {
 
     try {
         const otp = crypto.randomInt(100000, 999999);
-        otpStore[phNo] = { otp, expiresAt: Date.now() + 2 * 60 * 1000 }; // Expires in 2 minutes
+        otpStore[phNo] = { otp, expiresAt: Date.now() + 2 * 60 * 1000 };
 
         await client.messages.create({
             body: `Post Seva\nYour OTP is ${otp}`,
@@ -114,7 +115,7 @@ const verifyToken = async (req, res) => {
     try {
         // Extract the token from the body
         const actualToken = token.startsWith("Bearer ") ? token.split(" ")[1] : token;
-        
+
         if (!actualToken || actualToken.split('.').length !== 3) {
             return res.status(400).json({ error: "Invalid token format" });
         }
@@ -132,10 +133,181 @@ const verifyToken = async (req, res) => {
     }
 };
 
+const createComplaint = async (req, res) => {
+    try {
+        const {
+            category,
+            service,
+            type,
+            complaintNumber,
+            amount,
+            complaintDate,
+            complaintOffice,
+            description,
+            supportingDocuments,
+            userId,
+        } = req.body;
+
+        if (!category || !service || !type || !userId) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        const newComplaint = {
+            category,
+            service,
+            type,
+            complaintNumber,
+            amount,
+            complaintDate: complaintDate ? new Date(complaintDate) : null,
+            complaintOffice,
+            description,
+            supportingDocuments,
+            userId: new mongoose.Types.ObjectId(userId),
+            status: 'review',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        };
+
+        const result = await Complaints.collection.insertOne(newComplaint);
+
+        res.status(201).json({
+            message: "Complaint created successfully",
+            complaintId: result.insertedId,
+            complaint: { ...newComplaint, _id: result.insertedId },
+        });
+    } catch (error) {
+        console.error("Error creating complaint:", error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+};
+
+// To get all the complaints
+const getAllComplaints = async (req, res) => {
+    try {
+        const complaints = await Complaints.find();
+
+        if (!complaints.length) {
+            return res.status(404).json({ message: "No complaints found" });
+        }
+
+        res.status(200).json({
+            message: "Complaints retrieved successfully",
+            complaints,
+        });
+    } catch (error) {
+        console.error("Error fetching complaints:", error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+};
+
+// To get a complaint using ID
+const getComplaintById = async (req, res) => {
+    try {
+        const { complaintId } = req.body;
+
+        if (!complaintId) {
+            return res.status(400).json({ message: "Complaint ID is required" });
+        }
+
+        const complaint = await Complaints.findById(complaintId);
+
+        if (!complaint) {
+            return res.status(404).json({ message: "Complaint not found" });
+        }
+
+        res.status(200).json({
+            message: "Complaint retrieved successfully",
+            complaint,
+        });
+    } catch (error) {
+        console.error("Error fetching complaint:", error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+};
+
+const createFeedback = async (req, res) => {
+    try {
+        const { complaintId, feedback } = req.body;
+
+        if (!complaintId || !feedback) {
+            return res.status(400).json({ message: "Complaint ID and feedback are required" });
+        }
+
+        const complaint = await Complaints.findById(complaintId);
+
+        if (!complaint) {
+            return res.status(404).json({ message: "Complaint not found" });
+        }
+
+        const feedbackData = {
+            feedback: feedback,
+            createdAt: new Date(),
+        };
+
+        const result = await Complaints.collection.updateOne(
+            { _id: complaint._id },
+            { $push: { feedbacks: feedbackData } }
+        );
+
+        res.status(200).json({
+            message: "Feedback added successfully",
+            complaintId: complaint._id,
+            feedback: feedbackData,
+        });
+    } catch (error) {
+        console.error("Error adding feedback:", error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+};
+
+// Update the status of the complaint
+const updateComplaintStatus = async (req, res) => {
+    try {
+        const { complaintId, status } = req.body;
+
+        if (!complaintId || !status) {
+            return res.status(400).json({ message: "Complaint ID and status are required" });
+        }
+
+        const validStatuses = ['review', 'accepted', 'open', 'in_progress', 'closed', 'rejected'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ message: "Invalid status value" });
+        }
+
+        const result = await Complaints.updateOne(
+            { _id: complaintId },
+            { $set: { status } }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ message: "Complaint not found" });
+        }
+
+        res.status(200).json({
+            message: "Complaint status updated successfully",
+            complaintId,
+            status,
+        });
+    } catch (error) {
+        console.error("Error updating complaint status:", error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+};
 
 // Cron Job
 const cronJob = async (req, res) => {
     res.status(200).json({ message: "Running" });
 }
 
-module.exports = { sendOtp, verifyOtp, cronJob, updateUser, verifyToken };
+module.exports = {
+    sendOtp,
+    verifyOtp,
+    cronJob,
+    updateUser,
+    verifyToken,
+    createComplaint,
+    getAllComplaints,
+    getComplaintById,
+    createFeedback,
+    updateComplaintStatus
+};
