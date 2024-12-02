@@ -8,7 +8,8 @@ const {
     createComplaint,
     getAllComplaints,
     getComplaintById,
-    createFeedback
+    createFeedback,
+    updateComplaintStatus
 } = require('../controllers/userControllers');
 
 const routers = express.Router();
