@@ -1,7 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const User = require("../models/userModels");
-const { Complaints } = require("../models/userModels");
+const { User, Complaints } = require("../models/userModels");
 const crypto = require("crypto");
 const twilio = require("twilio");
 
