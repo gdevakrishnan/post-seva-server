@@ -5,6 +5,7 @@ const { default: mongoose } = require('mongoose');
 const userRouters = require('./routers/userRouters.js');
 const staffRouters = require('./routers/staffRouters.js');
 const kpiRouters = require('./routers/kpiRouters.js');
+const postRouters = require('./routers/postRouters.js');
 
 require('dotenv').config();
 const { PORT, MONGO_URI } = process.env;
@@ -26,5 +27,6 @@ mongoose.connect(MONGO_URI)
 app.use('/api/user', userRouters);
 app.use('/api/staff', staffRouters);
 app.use('/api/kpi', kpiRouters);
+app.use('/api/post', postRouters);
 
 // Deployed Link: https://post-seva-server.onrender.com
