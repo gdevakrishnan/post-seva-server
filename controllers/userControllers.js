@@ -256,7 +256,7 @@ const getComplaintById = async (req, res) => {
 
 const createFeedback = async (req, res) => {
     try {
-        const { complaintId, feedback } = req.body;
+        const { complaintId, feedback, userId } = req.body;
 
         if (!complaintId || !feedback) {
             return res.status(400).json({ message: "Complaint ID and feedback are required" });
@@ -269,6 +269,7 @@ const createFeedback = async (req, res) => {
         }
 
         const feedbackData = {
+            userId: userId,
             feedback: feedback,
             createdAt: new Date(),
         };
@@ -323,6 +324,39 @@ const updateComplaintStatus = async (req, res) => {
     }
 };
 
+// Complaint Tracking
+const complaintTracking = async (req, res) => {
+    try {
+        const { complaintId, staff } = req.body;
+
+        if (!complaintId || !staff) {
+            return res.status(400).json({ message: "Complaint ID and staff name are required" });
+        }
+
+        // Find the complaint
+        const complaint = await Complaints.findById(complaintId);
+
+        if (!complaint) {
+            return res.status(404).json({ message: "Complaint not found" });
+        }
+
+        // Update the staff field and add to the tracking array
+        complaint.staff = staff;
+        complaint.tracking.push(staff);
+
+        // Save the updated complaint
+        const updatedComplaint = await complaint.save();
+
+        res.status(200).json({
+            message: "Staff updated and tracking array modified successfully",
+            complaint: updatedComplaint,
+        });
+    } catch (error) {
+        console.error("Error in complaint tracking:", error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+};
+
 // Cron Job
 const cronJob = async (req, res) => {
     res.status(200).json({ message: "Running" });
@@ -339,5 +373,6 @@ module.exports = {
     getAllComplaints,
     getComplaintById,
     createFeedback,
-    updateComplaintStatus
+    updateComplaintStatus,
+    complaintTracking
 };

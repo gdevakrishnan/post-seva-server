@@ -48,13 +48,35 @@ const complaintSchema = new Schema(
             ref: "User",
             required: true,
         },
-        feedbacks: {
+        feedbacks: [
+            {
+                feedback: {
+                    type: String,
+                    required: true,
+                },
+                userId: {
+                    type: Schema.Types.ObjectId,
+                    ref: "User",
+                    required: true,
+                },
+                timestamp: {
+                    type: Date,
+                    default: Date.now,
+                },
+            },
+        ],
+        staff: {
+            type: String,
+            default: null,
+        },
+        tracking: {
             type: [String],
             default: [],
         },
     },
     { timestamps: true }
 );
+
 
 const userModel = new Schema(
     {
