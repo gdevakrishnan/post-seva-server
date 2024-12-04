@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const { User, Complaints } = require("../models/userModels");
 const crypto = require("crypto");
 const twilio = require("twilio");
+const { default: mongoose } = require("mongoose");
 
 require('dotenv').config();
 
@@ -209,7 +210,8 @@ const createComplaint = async (req, res) => {
 // To get all the complaints
 const getAllComplaints = async (req, res) => {
     try {
-        const complaints = await Complaints.find();
+        // Fetch all complaints with the feedbacks field included
+        const complaints = await Complaints.find().lean();
 
         if (!complaints.length) {
             return res.status(404).json({ message: "No complaints found" });
@@ -234,7 +236,8 @@ const getComplaintById = async (req, res) => {
             return res.status(400).json({ message: "Complaint ID is required" });
         }
 
-        const complaint = await Complaints.findById(complaintId);
+        // Fetch the complaint including the feedbacks array
+        const complaint = await Complaints.findById(complaintId).lean();
 
         if (!complaint) {
             return res.status(404).json({ message: "Complaint not found" });
@@ -249,6 +252,7 @@ const getComplaintById = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error });
     }
 };
+
 
 const createFeedback = async (req, res) => {
     try {
