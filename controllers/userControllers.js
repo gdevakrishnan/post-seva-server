@@ -333,19 +333,19 @@ const complaintTracking = async (req, res) => {
             return res.status(400).json({ message: "Complaint ID and staff name are required" });
         }
 
-        // Find the complaint
-        const complaint = await Complaints.findById(complaintId);
+        // Update the complaint by setting `staff` and pushing to `tracking`
+        const updatedComplaint = await Complaints.findOneAndUpdate(
+            { _id: complaintId },
+            {
+                $set: { staff },
+                $push: { tracking: { name: staff, date: new Date() } }
+            },
+            { new: true } // Return the updated document
+        );
 
-        if (!complaint) {
+        if (!updatedComplaint) {
             return res.status(404).json({ message: "Complaint not found" });
         }
-
-        // Update the staff field and add to the tracking array
-        complaint.staff = staff;
-        complaint.tracking.push(staff);
-
-        // Save the updated complaint
-        const updatedComplaint = await complaint.save();
 
         res.status(200).json({
             message: "Staff updated and tracking array modified successfully",

@@ -65,14 +65,13 @@ const complaintSchema = new Schema(
                 },
             },
         ],
-        staff: {
-            type: String,
-            default: null,
-        },
-        tracking: {
-            type: [String],
-            default: [],
-        },
+        staff: { type: String },
+        tracking: [
+            {
+                name: { type: String, required: true },
+                date: { type: Date, required: true }
+            }
+        ],
     },
     { timestamps: true }
 );
