@@ -6,6 +6,7 @@ const userRouters = require('./routers/userRouters.js');
 const staffRouters = require('./routers/staffRouters.js');
 const kpiRouters = require('./routers/kpiRouters.js');
 const postRouters = require('./routers/postRouters.js');
+const postmanRoutes = require('./routers/postmanRouters.js');
 
 require('dotenv').config();
 const { PORT, MONGO_URI } = process.env;
@@ -28,5 +29,6 @@ app.use('/api/user', userRouters);
 app.use('/api/staff', staffRouters);
 app.use('/api/kpi', kpiRouters);
 app.use('/api/post', postRouters);
+app.use('/api/postman', postmanRoutes);
 
 // Deployed Link: https://post-seva-server.onrender.com
