@@ -227,7 +227,7 @@ const getAllComplaints = async (req, res) => {
     }
 };
 
-// To get a complaint using ID
+// To get a complaint using ID - Complaint ID
 const getComplaintById = async (req, res) => {
     try {
         const { complaintId } = req.body;
@@ -253,6 +253,31 @@ const getComplaintById = async (req, res) => {
     }
 };
 
+// To get complaint by user ID
+const getComplaintsByUserId = async (req, res) => {
+    try {
+        const { userId } = req.body; // Extract userId from the request body
+
+        if (!userId) {
+            return res.status(400).json({ message: "User ID is required" });
+        }
+
+        // Fetch complaints that match the provided userId
+        const complaints = await Complaints.find({ userId }).lean();
+
+        if (!complaints || complaints.length === 0) {
+            return res.status(404).json({ message: "No complaints found for the given user ID" });
+        }
+
+        res.status(200).json({
+            message: "Complaints retrieved successfully",
+            complaints,
+        });
+    } catch (error) {
+        console.error("Error fetching complaints by user ID:", error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+};
 
 const createFeedback = async (req, res) => {
     try {
@@ -374,5 +399,6 @@ module.exports = {
     getComplaintById,
     createFeedback,
     updateComplaintStatus,
-    complaintTracking
+    complaintTracking,
+    getComplaintsByUserId
 };

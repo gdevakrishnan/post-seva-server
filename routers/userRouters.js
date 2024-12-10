@@ -12,6 +12,7 @@ const {
     createFeedback,
     updateComplaintStatus,
     complaintTracking,
+    getComplaintsByUserId,
 } = require('../controllers/userControllers');
 
 const routers = express.Router();
@@ -30,6 +31,7 @@ routers.post('/get-complaint-by-id', getComplaintById); // Get a specific compla
 routers.post('/create-feedback', createFeedback); // Create feedback for a complaint
 routers.put('/update-status', updateComplaintStatus); // Update the status of the complaint
 routers.post('/complaint-tracking', complaintTracking); // Add/update staff in complaint tracking
+routers.post('/complaints-by-userid', getComplaintsByUserId); // Get complaints by user ID
 
 // General utility routes
 routers.get('/cron-job', cronJob);

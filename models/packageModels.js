@@ -43,6 +43,10 @@ const packageSchema = new mongoose.Schema(
       enum: ['In Transit', 'Delivered', 'Pending'], // Define statuses
       default: 'Pending',
     },
+    otp: {
+      type: String,
+      required: false,
+    }
   },
   { timestamps: true } // Automatically add createdAt and updatedAt fields
 );
