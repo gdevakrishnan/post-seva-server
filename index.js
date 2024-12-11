@@ -19,7 +19,7 @@ app.use(cors({origin: "*", Credential: true, methods: ["GET", "POST", "PUT", "DE
 // Database and server listening
 mongoose.connect(MONGO_URI)
     .then(() => {
-        app.listen(PORT, () => {
+        app.listen(PORT, process.env.HOST , () => {
             console.log(`The Database was Connected Successfully\nThe Server was Listening\nhttp://localhost:${PORT}`);
         });
     })
