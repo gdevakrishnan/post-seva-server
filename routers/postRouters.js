@@ -1,27 +1,13 @@
-const express = require('express');
-const {
-    addPost,
-    addTrackingById,
-    getPostById,
-    updateStatusById,
-    getPostsByMobileAndStatus
-} = require('../controllers/postControllers');
-
+// postRoutes.js
+const express = require("express");
 const router = express.Router();
+const postController = require("../controllers/postControllers");
 
-// Route to add a new post
-router.post('/add', addPost);
-
-// Route to add a tracking object by ObjectId
-router.put('/tracking/:id', addTrackingById);
-
-// Route to get a post by ObjectId
-router.get('/get-post/:id', getPostById);
-
-// Route to update post status by ObjectId
-router.put('/status/:id', updateStatusById);
-
-// Route to get posts by mobile number and status
-router.get('/get-posts', getPostsByMobileAndStatus);
+// Define routes
+router.post("/add-post", postController.addPost);
+router.get("/:id", postController.getPostById);
+router.patch("/:id/status", postController.updateStatus);
+router.post("/:id/pickup-delivery", postController.pickupArticle);
+router.post("/:id/deliver", postController.deliverArticle);
 
 module.exports = router;

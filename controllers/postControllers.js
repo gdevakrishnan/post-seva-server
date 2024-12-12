@@ -1,167 +1,120 @@
-const Post = require('../models/postModels');
+// postController.js
+const Post = require("../models/postModels");
+
+const twilio = require("twilio");
+const { TWILIO_SID, TWILIO_AUTH_TOKEN, TWILIO_MOBILE_NUMBER } = process.env;
+const client = twilio(TWILIO_SID, TWILIO_AUTH_TOKEN);
 
 // Add a new post
-const addPost = async (req, res) => {
+exports.addPost = async (req, res) => {
     try {
-        const postData = req.body;
-
-        // Create a new Post instance
-        const newPost = new Post(postData);
-        
-        // Save the new post to the database
+        const newPost = new Post(req.body);
         await newPost.save();
-
-        res.status(201).json({
-            success: true,
-            message: 'Post added successfully',
-            data: { objectId: newPost._id, ...newPost.toObject() }
-        });
+        res.status(201).json({ message: "Post created successfully", id: newPost._id });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error adding post',
-            error: error.message
-        });
+        res.status(400).json({ error: error.message });
     }
 };
 
-// Add a new tracking by ObjectId
-const addTrackingById = async (req, res) => {
-    const { id } = req.params;
-    const trackingData = req.body;
-
+// Get a post by ID
+exports.getPostById = async (req, res) => {
     try {
-        const updatedPost = await Post.findByIdAndUpdate(
-            id,
-            { $push: { tracking: trackingData } },
-            { new: true }
+        const post = await Post.findById(req.params.id);
+        if (!post) return res.status(404).json({ message: "Post not found" });
+        res.status(200).json(post);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
+// Update post status
+exports.updateStatus = async (req, res) => {
+    try {
+        const { status } = req.body;
+        if (!["not-dispatch", "progressing", "dispatched"].includes(status)) {
+            return res.status(400).json({ message: "Invalid status value" });
+        }
+
+        const post = await Post.findByIdAndUpdate(
+            req.params.id,
+            { status },
+            { new: true, runValidators: true }
         );
 
-        if (!updatedPost) {
-            return res.status(404).json({
-                success: false,
-                message: 'Post not found with the given ObjectId'
-            });
-        }
+        if (!post) return res.status(404).json({ message: "Post not found" });
 
-        res.status(200).json({
-            success: true,
-            message: 'Tracking data added successfully',
-            data: updatedPost
-        });
+        res.status(200).json({ message: "Status updated successfully", post });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error adding tracking data',
-            error: error.message
-        });
+        res.status(400).json({ error: error.message });
     }
 };
 
-// Get a post by ObjectId
-const getPostById = async (req, res) => {
-    const { id } = req.params;
-
+// Pickup the article
+exports.pickupArticle = async (req, res) => {
     try {
-        const post = await Post.findById(id);
+        const post = await Post.findById(req.params.id);
+        if (!post) return res.status(404).json({ message: "Post not found" });
 
-        if (!post) {
-            return res.status(404).json({
-                success: false,
-                message: 'Post not found with the given ObjectId'
-            });
-        }
+        // Send SMS to sender
+        await client.messages.create({
+            body: `Dear ${post.fromUserName}, your article has been picked up successfully!`,
+            from: TWILIO_MOBILE_NUMBER,
+            to: post.fromMobileNo,
+        });
+
+        // Send SMS to receiver
+        await client.messages.create({
+            body: `Dear ${post.toUserName}, your article is on the way!`,
+            from: TWILIO_MOBILE_NUMBER,
+            to: post.toMobileNo,
+        });
 
         res.status(200).json({
-            success: true,
-            message: 'Post retrieved successfully',
-            data: post
+            message: "Acknowledgment sent to both sender and receiver.",
+            post,
         });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error retrieving post',
-            error: error.message
-        });
+        res.status(400).json({ error: error.message });
     }
 };
 
-// Update status by ObjectId
-const updateStatusById = async (req, res) => {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    // Check if the status is valid
-    if (!["not-dispatch", "progressing", "dispatched"].includes(status)) {
-        return res.status(400).json({
-            success: false,
-            message: 'Invalid status. Status must be one of ["not-dispatch", "progressing", "dispatched"]'
-        });
-    }
-
+// Deliver the article
+exports.deliverArticle = async (req, res) => {
     try {
-        const updatedPost = await Post.findByIdAndUpdate(
-            id,
-            { status: status },
-            { new: true }
-        );
+        const post = await Post.findById(req.params.id);
+        if (!post) return res.status(404).json({ message: "Post not found" });
 
-        if (!updatedPost) {
-            return res.status(404).json({
-                success: false,
-                message: 'Post not found with the given ObjectId'
-            });
-        }
+        // Generate a random OTP
+        const otp = Math.floor(100000 + Math.random() * 900000);
+
+        // Send OTP to the receiver
+        await client.messages.create({
+            body: `Dear ${post.toUserName}, your OTP for article delivery is ${otp}.`,
+            from: TWILIO_MOBILE_NUMBER,
+            to: post.toMobileNo,
+        });
+
+        // Verify OTP (mock verification for now)
+        // In a real-world app, you'd compare the OTP with user input
+
+        // Acknowledge delivery to sender and receiver
+        await client.messages.create({
+            body: `Dear ${post.fromUserName}, article delivered! ID ${req.params.id}.`,
+            from: TWILIO_MOBILE_NUMBER,
+            to: post.fromMobileNo,
+        });
+
+        await client.messages.create({
+            body: `Dear ${post.toUserName}, article successfully delivered! ID ${req.params.id}.`,
+            from: TWILIO_MOBILE_NUMBER,
+            to: post.toMobileNo,
+        });
 
         res.status(200).json({
-            success: true,
-            message: 'Post status updated successfully',
-            data: updatedPost
+            message: "Delivery acknowledgment sent to both sender and receiver.",
+            post,
         });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error updating post status',
-            error: error.message
-        });
+        res.status(400).json({ error: error.message });
     }
 };
-
-// Get posts by mobile number and status
-const getPostsByMobileAndStatus = async (req, res) => {
-    const { mobileNo, status } = req.body; // Use req.query to fetch query params
-
-    try {
-        const query = {};
-
-        if (mobileNo) {
-            query.$or = [{ fromMobileNo: mobileNo }, { toMobileNo: mobileNo }];
-        }
-        if (status) {
-            query.status = status;
-        }
-
-        const posts = await Post.find(query);
-
-        if (posts.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'No posts found for the given mobile number and status'
-            });
-        }
-
-        res.status(200).json({
-            success: true,
-            message: 'Posts retrieved successfully',
-            data: posts
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error retrieving posts',
-            error: error.message
-        });
-    }
-};
-
-module.exports = { addPost, addTrackingById, updateStatusById, getPostById, getPostsByMobileAndStatus };

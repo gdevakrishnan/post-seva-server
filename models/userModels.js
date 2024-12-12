@@ -40,7 +40,7 @@ const complaintSchema = new Schema(
         },
         status: {
             type: String,
-            enum: ['review', 'accepted', 'open', 'in_progress', 'closed', 'rejected'],
+            enum: ['review', 'accepted', 'closed', 'rejected'],
             default: 'review',
         },
         userId: {
@@ -102,6 +102,11 @@ const userModel = new Schema(
         },
         lon: {
             type: Number,
+            required: true,
+        },
+        type: {
+            type: String,
+            default: "staff",
             required: true,
         },
     },
