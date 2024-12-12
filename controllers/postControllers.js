@@ -1,6 +1,4 @@
-// postController.js
 const Post = require("../models/postModels");
-
 const twilio = require("twilio");
 const { TWILIO_SID, TWILIO_AUTH_TOKEN, TWILIO_MOBILE_NUMBER } = process.env;
 const client = twilio(TWILIO_SID, TWILIO_AUTH_TOKEN);
@@ -94,9 +92,6 @@ exports.deliverArticle = async (req, res) => {
             to: post.toMobileNo,
         });
 
-        // Verify OTP (mock verification for now)
-        // In a real-world app, you'd compare the OTP with user input
-
         // Acknowledge delivery to sender and receiver
         await client.messages.create({
             body: `Dear ${post.fromUserName}, article delivered! ID ${req.params.id}.`,
@@ -114,6 +109,48 @@ exports.deliverArticle = async (req, res) => {
             message: "Delivery acknowledgment sent to both sender and receiver.",
             post,
         });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
+// Controller function to fetch a post by fromPostalCode
+exports.getPostByPostalCode = async (req, res) => {
+    try {
+        // Get the fromPostalCode from the query parameters
+        const { fromPostalCode } = req.params;
+
+        // Validate if fromPostalCode is provided
+        if (!fromPostalCode) {
+            return res.status(400).json({ message: "fromPostalCode is required" });
+        }
+
+        // Find a post with the same fromPostalCode
+        const post = await Post.findOne({ fromPostalCode });
+
+        // If no post is found with that postal code
+        if (!post) {
+            return res.status(404).json({ message: "No post found with the given fromPostalCode" });
+        }
+
+        // Return the found post as response
+        res.status(200).json(post);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server error", error: err.message });
+    }
+};
+
+// Get all the posts
+exports.getAllPosts = async (req, res) => {
+    try {
+        console.log("HI");
+        
+        const posts = await Post.find({});  // Get all posts
+        if (posts.length === 0) {
+            return res.status(404).json({ message: "No posts found" });
+        }
+        res.status(200).json(posts);  // Send all posts in the response
     } catch (error) {
         res.status(400).json({ error: error.message });
     }

@@ -1,6 +1,7 @@
 const express = require('express');
 const { registerPostman, loginPostman } = require('../controllers/postmanControllers');
 const { verifyToken } = require('../controllers/postmanControllers');
+const { getPostsByPostalCode } = require('../controllers/postControllers');
 
 const router = express.Router();
 
